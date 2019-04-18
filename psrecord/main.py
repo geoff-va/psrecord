@@ -72,6 +72,9 @@ def main():
     parser.add_argument('--log', type=str,
                         help='output the statistics to a file')
 
+    parser.add_argument('--csv', type=str,
+                        help='output the statistics to a csv file')
+
     parser.add_argument('--plot', type=str,
                         help='output the statistics to a plot')
 
@@ -106,14 +109,15 @@ def main():
         pid = sprocess.pid
 
     monitor(pid, logfile=args.log, plot=args.plot, duration=args.duration,
-            interval=args.interval, include_children=args.include_children)
+            interval=args.interval, include_children=args.include_children,
+            csvfile=args.csv)
 
     if sprocess is not None:
         sprocess.kill()
 
 
 def monitor(pid, logfile=None, plot=None, duration=None, interval=None,
-            include_children=False):
+            include_children=False, csvfile=None):
 
     pr = psutil.Process(pid)
 
@@ -128,6 +132,16 @@ def monitor(pid, logfile=None, plot=None, duration=None, interval=None,
             'CPU (%)'.center(12),
             'Real (MB)'.center(12),
             'Virtual (MB)'.center(12))
+        )
+
+    if csvfile:
+        c = open(csvfile, 'w')
+        c.write("{0},{1},{2},{3},{4}\n".format(
+            'Current Time',
+            'Elapsed Time',
+            'CPU (%)',
+            'Real (MB)',
+            'Virtual (MB)')
         )
 
     log = {}
@@ -192,6 +206,15 @@ def monitor(pid, logfile=None, plot=None, duration=None, interval=None,
                     current_mem_virtual))
                 f.flush()
 
+            if csvfile:
+                c.write("{0},{1},{2},{3},{4}\n".format(
+                    current_time,
+                    logged_time,
+                    current_cpu,
+                    current_mem_real,
+                    current_mem_virtual))
+                c.flush()
+
             if interval is not None:
                 time.sleep(interval)
 
@@ -208,6 +231,9 @@ def monitor(pid, logfile=None, plot=None, duration=None, interval=None,
 
     if logfile:
         f.close()
+
+    if csvfile:
+        c.close()
 
     if plot:
 
